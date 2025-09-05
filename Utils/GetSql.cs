@@ -27,7 +27,7 @@ namespace DbModelGenerator.Utils
         }
 
         // Tabloları getir
-        public List<string> GetTable()
+        public List<string> GetTables()
         {
             List<string> tabloIsimleri = new List<string>();
             try
@@ -50,7 +50,7 @@ namespace DbModelGenerator.Utils
         }
 
         // Sütunları getir
-        public List<Sutun> GetColumn(string tablo)
+        public List<Sutun> GetColumns(string tablo)
         {
             var sutunlar = new List<Sutun>();
             try
@@ -81,7 +81,7 @@ namespace DbModelGenerator.Utils
         }
 
         // Prosedürleri getir
-        public List<string> GetProcedure()
+        public List<string> GetProcedures()
         {
             var prosedurler = new List<string>();
             try
@@ -104,7 +104,7 @@ namespace DbModelGenerator.Utils
         }
 
         // Prosedür parametrelerini getir
-        public List<ProsedurParametre> GetProcedureParameter(string prosedur)
+        public List<ProsedurParametre> GetProcedureParameters(string prosedur)
         {
             var parametre = new List<ProsedurParametre>();
             try
@@ -144,7 +144,7 @@ namespace DbModelGenerator.Utils
         }
 
         // Prosedür sütunlarını getir
-        public List<ProsedurSutun> GetProcedureColumn(string prosedur)
+        public List<ProsedurSutun> GetProcedureColumns(string prosedur)
         {
             var sutun = new List<ProsedurSutun>();
             try
@@ -181,7 +181,7 @@ namespace DbModelGenerator.Utils
         }
 
         // Foreign Keyleri getir
-        public List<ForeignKeyInfo> GetForeignKey()
+        public List<ForeignKeyInfo> GetForeignKeys()
         {
             var foreignKeys = new List<ForeignKeyInfo>();
             try

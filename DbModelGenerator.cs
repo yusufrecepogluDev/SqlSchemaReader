@@ -17,9 +17,9 @@ public class DbModelGenerator
     {
         try
         {
-            foreach (var tablo in _getSql.GetTable())
+            foreach (var tablo in _getSql.GetTables())
             {
-                List<Sutun> sutunlar = _getSql.GetColumn(tablo);
+                List<Sutun> sutunlar = _getSql.GetColumns(tablo);
                 var sb = new StringBuilder();
                 var className = NameEditor.PascalCase(tablo);
                 var dbSetName = className.Length > 1 ? className[..^1] : className;
@@ -40,7 +40,7 @@ public class DbModelGenerator
                     }
                     sb.AppendLine($"        public {csTip} {propertyName} {{ get; set; }}\n");
                 }
-                foreach (var fk in _getSql.GetForeignKey().Where(fk => fk.FKTable == tablo || fk.PKTable == tablo))
+                foreach (var fk in _getSql.GetForeignKeys().Where(fk => fk.FKTable == tablo || fk.PKTable == tablo))
                 {
                     bool isCollection = fk.PKTable == tablo; // tabloya 1’e-çok FK varsa
                     string relatedType = EnglishInflector.ToSingular(NameEditor.PascalCase(fk.PKTable == tablo ? fk.FKTable : fk.PKTable));
@@ -75,9 +75,9 @@ public class DbModelGenerator
     {
         try
         {
-            foreach (var prosedur in _getSql.GetProcedure())
+            foreach (var prosedur in _getSql.GetProcedures())
             {
-                var resultColumns = _getSql.GetProcedureColumn(prosedur);
+                var resultColumns = _getSql.GetProcedureColumns(prosedur);
                 var ClassName = NameEditor.PascalCase(prosedur);
                 if (resultColumns.Any())
                 {
@@ -113,7 +113,7 @@ public class DbModelGenerator
                     }
                 }
                 // Parametre modeli
-                var parameters = _getSql.GetProcedureParameter(prosedur);
+                var parameters = _getSql.GetProcedureParameters(prosedur);
                 if (parameters.Any())
                 {
                     try
@@ -157,20 +157,20 @@ public class DbModelGenerator
         }
     }
 
-    public void DBContextGenerator(string klasorYolu, string _database)
+    public void DBContextGenerator(string klasorYolu, string _namespace)
     {
         try
         {
             var sb = new StringBuilder();
             sb.AppendLine("using Microsoft.EntityFrameworkCore;");
             sb.AppendLine();
-            sb.AppendLine($"namespace {_database}");
+            sb.AppendLine($"namespace {_namespace}");
             sb.AppendLine("{");
             sb.AppendLine("    public class AppDbContext : DbContext");
             sb.AppendLine("    {");
             sb.AppendLine("        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }\n");
 
-            foreach (var tablo in _getSql.GetTable())
+            foreach (var tablo in _getSql.GetTables())
             {
                 string typeName = EnglishInflector.ToSingular(NameEditor.PascalCase(tablo));
                 string propName = EnglishInflector.ToPlural(typeName);// PascalCase ile baş harfleri büyük
@@ -179,13 +179,13 @@ public class DbModelGenerator
             sb.AppendLine("    ");
             sb.AppendLine("        protected override void OnModelCreating(ModelBuilder modelBuilder)");
             sb.AppendLine("        {");
-            foreach (var tablo in _getSql.GetTable())
+            foreach (var tablo in _getSql.GetTables())
             {
                 sb.AppendLine($"            modelBuilder.Entity<{EnglishInflector.ToSingular(NameEditor.PascalCase(tablo))}>().ToTable(\"{tablo}\");\n");
             }
             sb.AppendLine("        ");
             sb.AppendLine("        ");
-            foreach (var fk in _getSql.GetForeignKey())
+            foreach (var fk in _getSql.GetForeignKeys())
             {
                 sb.AppendLine($"            modelBuilder.Entity<{EnglishInflector.ToSingular(NameEditor.PascalCase(fk.FKTable))}>()");
                 sb.AppendLine($"                .HasOne({NameEditor.GetAbbreviation(NameEditor.PascalCase(fk.FKTable))} => {NameEditor.GetAbbreviation(NameEditor.PascalCase(fk.FKTable))}.{EnglishInflector.ToSingular(fk.PKTable)})");
@@ -205,5 +205,4 @@ public class DbModelGenerator
             Console.WriteLine($"DbContext Oluşturma Hatası: {ex.Message}");
         }
     }
-
 }
