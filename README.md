@@ -61,7 +61,7 @@ generator.DBContextGenerator(@"C:\\Models", "MyApp.Models");
 | ------------ | ----------------------------------------------- |
 | `server`     | SQL Server name or endpoint                     |
 | `database`   | Target database name                            |
-| `klasorYolu` | Folder path where generated files will be saved |
+| `path` | Folder path where generated files will be saved |
 | `_namespace` | Namespace for generated C# classes              |
 
 ---
@@ -179,7 +179,7 @@ generator.DBContextGenerator(@"C:\\Models", "MyApp.Models");
 | ------------ | -------------------------------------------------- |
 | `server`     | SQL Server adı veya bağlantı noktası               |
 | `database`   | Hedef veritabanı adı                               |
-| `klasorYolu` | Oluşturulacak dosyaların kaydedileceği klasör yolu |
+| `path` | Oluşturulacak dosyaların kaydedileceği klasör yolu |
 | `_namespace` | Oluşturulacak C# sınıfları için namespace          |
 
 ---
