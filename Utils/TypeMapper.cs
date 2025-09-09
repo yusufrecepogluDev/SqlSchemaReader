@@ -2,9 +2,9 @@
 {
     internal class TypeMapper
     {
-        public static string SqlTipiToCSharpTip(string sqlTipi, bool nullable)
+        public static string SqlTypeiToCSharpType(string sqlTypei, bool nullable)
         {
-            string csharpTip = sqlTipi switch
+            string csharpType = sqlTypei switch
             {
                 "int" => "int",
                 "bigint" => "long",
@@ -25,11 +25,11 @@
                 _ => "string"
             };
 
-            if (csharpTip != "string" && csharpTip != "byte[]" && csharpTip != "object" && nullable)
+            if (csharpType != "string" && csharpType != "byte[]" && csharpType != "object" && nullable)
             {
-                return csharpTip + "?";
+                return csharpType + "?";
             }
-            return csharpTip;
+            return csharpType;
         }
 
     }

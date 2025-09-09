@@ -26,10 +26,10 @@ namespace DbModelGenerator.Utils
             return new SqlConnection(GetConnectionString());
         }
 
-        // Tabloları getir
+        // tableları getir
         public List<string> GetTables()
         {
-            List<string> tabloIsimleri = new List<string>();
+            List<string> tableNames = new List<string>();
             try
             {
                 using var conn = CreateConnection();
@@ -40,50 +40,50 @@ namespace DbModelGenerator.Utils
 
                 using var reader = cmd.ExecuteReader();
                 while (reader.Read())
-                    tabloIsimleri.Add(reader.GetString(0));
+                    tableNames.Add(reader.GetString(0));
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Hatası (Tablolar): {ex.Message}");
+                Console.WriteLine($"SQL Error (Tables): {ex.Message}");
             }
-            return tabloIsimleri;
+            return tableNames;
         }
 
         // Sütunları getir
-        public List<Sutun> GetColumns(string tablo)
+        public List<Column> GetColumns(string table)
         {
-            var sutunlar = new List<Sutun>();
+            var columns = new List<Column>();
             try
             {
                 using var conn = CreateConnection();
                 conn.Open();
 
                 using var cmd = new SqlCommand(
-                    "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @Tablo", conn);
-                cmd.Parameters.AddWithValue("@Tablo", tablo);
+                    "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @table", conn);
+                cmd.Parameters.AddWithValue("@table", table);
 
                 using var reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    sutunlar.Add(new Sutun
+                    columns.Add(new Column
                     {
-                        Ad = reader.GetString(0),
-                        Tip = reader.GetString(1),
+                        Name = reader.GetString(0),
+                        Type = reader.GetString(1),
                         Nullable = reader.GetString(2) == "YES"
                     });
                 }
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Hatası (Sütunlar): {ex.Message}");
+                Console.WriteLine($"SQL Error (Columns): {ex.Message}");
             }
-            return sutunlar;
+            return columns;
         }
 
         // Prosedürleri getir
         public List<string> GetProcedures()
         {
-            var prosedurler = new List<string>();
+            var procedures = new List<string>();
             try
             {
                 using var conn = CreateConnection();
@@ -94,19 +94,19 @@ namespace DbModelGenerator.Utils
 
                 using var reader = cmd.ExecuteReader();
                 while (reader.Read())
-                    prosedurler.Add(reader.GetString(0));
+                    procedures.Add(reader.GetString(0));
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Hatası (Prosedürler): {ex.Message}");
+                Console.WriteLine($"SQL Error (Procedures): {ex.Message}");
             }
-            return prosedurler;
+            return procedures;
         }
 
-        // Prosedür parametrelerini getir
-        public List<ProsedurParametre> GetProcedureParameters(string prosedur)
+
+        public List<Prosedurparameter> GetProcedureParameters(string prosedur)
         {
-            var parametre = new List<ProsedurParametre>();
+            var parameter = new List<Prosedurparameter>();
             try
             {
                 using var conn = CreateConnection();
@@ -114,10 +114,10 @@ namespace DbModelGenerator.Utils
 
                 using var cmd = new SqlCommand(
                     @"SELECT  
-                        p.name AS ParametreAdi,
-                        t.name AS VeriTipi,
+                        p.name AS parameterNamei,
+                        t.name AS VeriTypei,
                         p.max_length AS Uzunluk,
-                        p.is_output AS CikisParametresiMi,
+                        p.is_output AS CikisparametersiMi,
                         p.has_default_value AS VarsayilanDegerVarMi
                     FROM sys.parameters p
                     JOIN sys.types t ON p.user_type_id = t.user_type_id
@@ -127,10 +127,10 @@ namespace DbModelGenerator.Utils
                 using var reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    parametre.Add(new ProsedurParametre
+                    parameter.Add(new Prosedurparameter
                     {
-                        Ad = reader.GetString(0),
-                        Tip = reader.GetString(1),
+                        Name = reader.GetString(0),
+                        Type = reader.GetString(1),
                         IsOutput = reader.GetBoolean(3),
                         Nullable = !reader.IsDBNull(4) && reader.GetBoolean(4)
                     });
@@ -138,15 +138,15 @@ namespace DbModelGenerator.Utils
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Hatası (Prosedür Parametreler): {ex.Message}");
+                Console.WriteLine($"SQL Error (Procedure Parameters): {ex.Message}");
             }
-            return parametre;
+            return parameter;
         }
 
-        // Prosedür sütunlarını getir
-        public List<ProsedurSutun> GetProcedureColumns(string prosedur)
+
+        public List<ProsedurColumn> GetProcedureColumns(string prosedur)
         {
-            var sutun = new List<ProsedurSutun>();
+            var Column = new List<ProsedurColumn>();
             try
             {
                 using var conn = CreateConnection();
@@ -165,22 +165,21 @@ namespace DbModelGenerator.Utils
                 using var reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    sutun.Add(new ProsedurSutun
+                    Column.Add(new ProsedurColumn
                     {
-                        Ad = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
-                        Tip = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                        Name = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
+                        Type = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
                         Nullable = !reader.IsDBNull(2) && reader.GetBoolean(2)
                     });
                 }
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Hatası (Prosedür Sütunlar - {prosedur}): {ex.Message}");
+                Console.WriteLine($"SQL Error (Procedure Columns - {prosedur}): {ex.Message}");
             }
-            return sutun;
+            return Column;
         }
 
-        // Foreign Keyleri getir
         public List<ForeignKeyInfo> GetForeignKeys()
         {
             var foreignKeys = new List<ForeignKeyInfo>();
@@ -219,7 +218,7 @@ namespace DbModelGenerator.Utils
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Hatası (Foreign Keys): {ex.Message}");
+                Console.WriteLine($"SQL Error (Foreign Keys): {ex.Message}");
             }
             return foreignKeys;
         }
