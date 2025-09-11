@@ -44,7 +44,8 @@ namespace DbModelGenerator.Utils
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Error (Tables): {ex.Message}");
+                string message = $"SQL Error (Tables): {ex.Message}";
+                ErrorLog(message);
             }
             return tableNames;
         }
@@ -59,7 +60,7 @@ namespace DbModelGenerator.Utils
                 conn.Open();
 
                 using var cmd = new SqlCommand(
-                    "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @table", conn);
+                    "SELECT COLUMN_NAME, DATA_TYPE ,CHARACTER_MAXIMUM_LENGTH, IS_IsNullable FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @table", conn);
                 cmd.Parameters.AddWithValue("@table", table);
 
                 using var reader = cmd.ExecuteReader();
@@ -69,13 +70,15 @@ namespace DbModelGenerator.Utils
                     {
                         Name = reader.GetString(0),
                         Type = reader.GetString(1),
-                        Nullable = reader.GetString(2) == "YES"
+                        TypeLength = reader.IsDBNull(2) ? -2 : reader.GetInt16(2),
+                        IsNullable = reader.GetString(3) == "YES"
                     });
                 }
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Error (Columns): {ex.Message}");
+                string message = $"SQL Error (Columns): {ex.Message}";
+                ErrorLog(message);
             }
             return columns;
         }
@@ -98,7 +101,8 @@ namespace DbModelGenerator.Utils
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Error (Procedures): {ex.Message}");
+                string message = $"SQL Error (Procedures): {ex.Message}";
+                ErrorLog(message);
             }
             return procedures;
         }
@@ -132,13 +136,14 @@ namespace DbModelGenerator.Utils
                         Name = reader.GetString(0),
                         Type = reader.GetString(1),
                         IsOutput = reader.GetBoolean(3),
-                        Nullable = !reader.IsDBNull(4) && reader.GetBoolean(4)
+                        IsNullable = !reader.IsDBNull(4) && reader.GetBoolean(4)
                     });
                 }
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Error (Procedure Parameters): {ex.Message}");
+                string message = $"SQL Error (Procedure Parameters): {ex.Message}";
+                ErrorLog(message);
             }
             return parameter;
         }
@@ -156,7 +161,7 @@ namespace DbModelGenerator.Utils
                     SELECT 
                         name, 
                         system_type_name, 
-                        is_nullable
+                        is_IsNullable
                     FROM sys.dm_exec_describe_first_result_set(@sql, NULL, 0);";
 
                 using var cmd = new SqlCommand(sql, conn);
@@ -169,15 +174,52 @@ namespace DbModelGenerator.Utils
                     {
                         Name = reader.IsDBNull(0) ? string.Empty : reader.GetString(0),
                         Type = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                        Nullable = !reader.IsDBNull(2) && reader.GetBoolean(2)
+                        IsNullable = !reader.IsDBNull(2) && reader.GetBoolean(2)
                     });
                 }
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Error (Procedure Columns - {prosedur}): {ex.Message}");
+                string message = $"SQL Error (Procedure Columns - {prosedur}): {ex.Message}";
+                ErrorLog(message);
             }
             return Column;
+        }
+
+        public List<UniqueColmun> GetUniqueColmun(string _table)
+        {
+            var uniqueColmuns = new List<UniqueColmun>();
+            try
+            {
+                using var conn = CreateConnection();
+                conn.Open();
+                using var cmd = new SqlCommand(
+                    @"SELECT 
+                        col.name AS ColumnName,
+                        tab.name AS TableName
+                    FROM sys.indexes idx
+                    INNER JOIN sys.index_columns ic ON idx.object_id = ic.object_id AND idx.index_id = ic.index_id
+                    INNER JOIN sys.columns col ON ic.object_id = col.object_id AND ic.column_id = col.column_id
+                    INNER JOIN sys.tables tab ON idx.object_id = tab.object_id
+                    WHERE idx.is_unique = 1 AND idx.is_primary_key = 0 AND tab.name = @tablo
+                    ORDER BY tab.name, col.name", conn);
+                cmd.Parameters.AddWithValue("@tablo", _table);
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    uniqueColmuns.Add(new UniqueColmun
+                    {
+                        ColmunName = reader.GetString(0),
+                        TableName = reader.GetString(1)
+                    });
+                }
+            }
+            catch (SqlException ex)
+            {
+                string message = $"SQL Error (Unique Columns): {ex.Message}";
+                ErrorLog(message);
+            }
+            return uniqueColmuns;
         }
 
         public List<ForeignKeyInfo> GetForeignKeys()
@@ -194,7 +236,7 @@ namespace DbModelGenerator.Utils
                         cr.name AS PK_Column,
                         tp.name AS FK_Table,
                         tr.name AS PK_Table,
-                        cp.is_nullable AS PK_Nullable
+                        cp.is_IsNullable AS PK_IsNullable
                     FROM sys.foreign_keys fk
                     INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
                     INNER JOIN sys.tables tp ON fkc.parent_object_id = tp.object_id
@@ -218,9 +260,16 @@ namespace DbModelGenerator.Utils
             }
             catch (SqlException ex)
             {
-                Console.WriteLine($"SQL Error (Foreign Keys): {ex.Message}");
+                string message = $"SQL Error (Foreign Keys): {ex.Message}";
+                ErrorLog(message);
             }
             return foreignKeys;
         }
+
+        public void ErrorLog(string message)
+        {
+            Console.WriteLine($"Error: {message}");
+        }
+
     }
 }

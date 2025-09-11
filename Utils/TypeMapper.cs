@@ -2,7 +2,7 @@
 {
     internal class TypeMapper
     {
-        public static string SqlTypeiToCSharpType(string sqlTypei, bool nullable)
+        public static string SqlTypeiToCSharpType(string sqlTypei, bool IsNullable)
         {
             string csharpType = sqlTypei switch
             {
@@ -25,7 +25,7 @@
                 _ => "string"
             };
 
-            if (csharpType != "string" && csharpType != "byte[]" && csharpType != "object" && nullable)
+            if (csharpType != "string" && csharpType != "byte[]" && csharpType != "object" && IsNullable)
             {
                 return csharpType + "?";
             }

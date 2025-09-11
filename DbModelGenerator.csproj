@@ -3,7 +3,7 @@
 <PropertyGroup>
   <TargetFramework>net9.0</TargetFramework>
   <ImplicitUsings>enable</ImplicitUsings>
-  <Nullable>enable</Nullable>
+  <IsNullable>enable</IsNullable>
   <PackageId>DbModelGenerator</PackageId>  
   <Version>1.0.0</Version>               
   <Authors>Yusuf</Authors>               

@@ -4,7 +4,7 @@
 
 [🇹🇷 Türkçe versiyona geçmek için tıklayın](#turkce-versiyon)
 
-DbModelGenerator is a tool that reads tables, columns, stored procedures, and relationships from a SQL Server database and automatically generates C# class models and a `DbContext`. It produces classes ready for use with Entity Framework Core.
+DbModelGenerator is a small tool that reads tables, columns, stored procedures, and relationships from a SQL Server database and automatically generates C# class models and an Entity Framework Core DbContext. It produces classes ready for use with EF Core.
 
 ---
 
@@ -12,15 +12,15 @@ DbModelGenerator is a tool that reads tables, columns, stored procedures, and re
 
 * Generate C# class models from database tables
 * Generate result and parameter models from stored procedures
-* Detect foreign key relationships and integrate them into `DbContext`
-* Correctly handle nullable columns and map SQL types to C#
-* Automatically write generated files to a specified folder
+* Detect foreign key relationships and integrate them into a generated DbContext
+* Handle nullable columns and map SQL types to C# types
+* Write generated files to a specified folder
 
 ---
 
 ## Requirements
 
-* .NET 6 or later
+* .NET 9 or later
 * SQL Server database
 * Entity Framework Core (for DbContext usage)
 
@@ -34,7 +34,7 @@ DbModelGenerator is a tool that reads tables, columns, stored procedures, and re
 git clone https://github.com/YOUR_USERNAME/DbModelGenerator.git
 ```
 
-2. Open and build the project in Visual Studio or via the `dotnet CLI`.
+2. Open and build the project in Visual Studio or via the `dotnet` CLI.
 
 ---
 
@@ -46,13 +46,16 @@ using DbModelGenerator;
 var generator = new DbModelGenerator("SERVER_NAME", "DATABASE_NAME");
 
 // Generate table models
-generator.TabloModelGenerator(@"C:\\Models", "MyApp.Models");
+generator.tableModelGenerator(@"C:\\Models", "MyApp.Models");
 
 // Generate stored procedure models
 generator.ProsedurModelGenerator(@"C:\\Models", "MyApp.Models");
 
 // Generate DbContext
 generator.DBContextGenerator(@"C:\\Models", "MyApp.Models");
+
+// Or run all generators
+// generator.GenerateAll(@"C:\\Models", "MyApp.Models");
 ```
 
 ### Parameters
@@ -61,18 +64,18 @@ generator.DBContextGenerator(@"C:\\Models", "MyApp.Models");
 | ------------ | ----------------------------------------------- |
 | `server`     | SQL Server name or endpoint                     |
 | `database`   | Target database name                            |
-| `klasorYolu` | Folder path where generated files will be saved |
+| `path`       | Folder path where generated files will be saved |
 | `_namespace` | Namespace for generated C# classes              |
 
 ---
 
 ## Structure
 
-* `DbModelGenerator.cs` → Main class and methods (Table, Procedure, DbContext generation)
+* `DbModelGenerator.cs` → Main class and methods (table model, procedure model, DbContext generation)
 * `Utils/GetSql.cs` → Handles SQL Server connection and data retrieval
-* `Models/` → Folder where generated models are stored
+* `Models/` → Folder where generated models are stored (output)
 * `TypeMapper.cs` → Converts SQL types to C# types
-* `NameEditor.cs` → Handles naming conventions (PascalCase, plural/singular)
+* `NameEditor.cs` → Handles naming conventions (PascalCase, abbreviations)
 * `EnglishInflector.cs` → Plural/singular conversion for English
 
 ---
@@ -96,7 +99,7 @@ namespace MyApp.Models
 
 ## Error Handling
 
-* SQL connection errors or missing tables are printed to the console.
+* SQL connection errors or missing tables are logged to the console via the internal error logger.
 * Existing files will be overwritten when generating new ones.
 
 ---
@@ -110,8 +113,7 @@ namespace MyApp.Models
 
 ## License
 
-No specific license is assigned for this project. You do not need the author's permission to use, copy, or distribute it.
-Just give it a star!
+No specific license is assigned for this project. You do not need the author's permission to use, copy, or distribute it. Just give it a star!
 
 
 ---
@@ -122,23 +124,23 @@ Just give it a star!
 
 # DbModelGenerator
 
-DbModelGenerator, bir SQL Server veritabanındaki tabloları, sütunları, prosedürleri ve ilişkileri okuyarak otomatik olarak C# sınıf modelleri ve `DbContext` oluşturmanıza yardımcı olan bir araçtır. Entity Framework Core ile kullanıma hazır sınıflar üretir.
+DbModelGenerator, bir SQL Server veritabanındaki tabloları, sütunları, prosedürleri ve ilişkileri okuyarak otomatik olarak C# sınıf modelleri ve bir Entity Framework Core DbContext oluşturmanıza yardımcı olan küçük bir araçtır. EF Core ile kullanıma hazır sınıflar üretir.
 
 ---
 
 ## Özellikler
 
-* Tabloları okuyup C# sınıf modelleri oluşturma
-* Prosedürleri okuyup hem sonuç hem de parametre modelleri oluşturma
-* Foreign key ilişkilerini tanıyıp `DbContext`’e ekleme
-* Nullable sütunları ve veri tiplerini doğru şekilde C# karşılığına çevirme
-* Dosyaları belirtilen klasöre otomatik yazma
+* Veritabanı tablolarından C# sınıf modelleri oluşturma
+* Prosedürlerin sonuç ve parametre modellerini oluşturma
+* Foreign key ilişkilerini tespit edip oluşturulan DbContext'e ekleme
+* Nullable sütunları doğru şekilde ele alma ve SQL tiplerini C#'a çevirme
+* Oluşturulan dosyaları belirtilen klasöre yazma
 
 ---
 
 ## Gereksinimler
 
-* .NET 6 veya üzeri
+* .NET 9 veya üzeri
 * SQL Server veritabanı
 * Entity Framework Core (DbContext kullanımı için)
 
@@ -146,13 +148,13 @@ DbModelGenerator, bir SQL Server veritabanındaki tabloları, sütunları, prose
 
 ## Kurulum
 
-1. Projeyi klonlayın:
+1. Depoyu klonlayın:
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/DbModelGenerator.git
 ```
 
-2. Projeyi Visual Studio veya `dotnet CLI` ile açın ve derleyin.
+2. Projeyi Visual Studio veya `dotnet` CLI ile açıp derleyin.
 
 ---
 
@@ -164,13 +166,16 @@ using DbModelGenerator;
 var generator = new DbModelGenerator("SERVER_NAME", "DATABASE_NAME");
 
 // Model sınıfları oluştur
-generator.TabloModelGenerator(@"C:\\Models", "MyApp.Models");
+generator.tableModelGenerator(@"C:\\Models", "MyApp.Models");
 
 // Prosedür modelleri oluştur
 generator.ProsedurModelGenerator(@"C:\\Models", "MyApp.Models");
 
 // DbContext oluştur
 generator.DBContextGenerator(@"C:\\Models", "MyApp.Models");
+
+// Veya hepsini birden oluştur
+// generator.GenerateAll(@"C:\\Models", "MyApp.Models");
 ```
 
 ### Parametreler
@@ -179,18 +184,18 @@ generator.DBContextGenerator(@"C:\\Models", "MyApp.Models");
 | ------------ | -------------------------------------------------- |
 | `server`     | SQL Server adı veya bağlantı noktası               |
 | `database`   | Hedef veritabanı adı                               |
-| `klasorYolu` | Oluşturulacak dosyaların kaydedileceği klasör yolu |
+| `path`       | Oluşturulacak dosyaların kaydedileceği klasör yolu |
 | `_namespace` | Oluşturulacak C# sınıfları için namespace          |
 
 ---
 
-## Yapısı
+## Yapı
 
-* `DbModelGenerator.cs` → Ana sınıf ve metotlar (Tablo, Prosedür, DbContext oluşturma)
+* `DbModelGenerator.cs` → Ana sınıf ve metotlar (Tablo model, Prosedür model, DbContext oluşturma)
 * `Utils/GetSql.cs` → SQL Server ile bağlantı ve veri çekme işlemleri
-* `Models/` → Üretilen modellerin saklanacağı klasör
+* `Models/` → Üretilen modellerin saklanacağı klasör (çıktı)
 * `TypeMapper.cs` → SQL tiplerini C# tiplerine dönüştürür
-* `NameEditor.cs` → İsimlendirme düzenlemeleri (PascalCase, çoğul, tekil vb.)
+* `NameEditor.cs` → İsimlendirme düzenlemeleri (PascalCase, kısaltma oluşturma)
 * `EnglishInflector.cs` → İngilizce çoğul/tekil çevirici
 
 ---
@@ -214,19 +219,18 @@ namespace MyApp.Models
 
 ## Hata Yönetimi
 
-* SQL bağlantı hataları veya eksik tablolar konsola yazdırılır.
-* Oluşturulacak dosyalar yazılmadan önce mevcutsa üzerine yazılır.
+* SQL bağlantı hataları veya eksik tablolar konsola veya log'a yazılır.
+* Oluşturulacak dosyalar mevcutsa üzerine yazılır.
 
 ---
 
 ## Katkıda Bulunma
 
-* Fork’layın, değişiklik yapın ve pull request gönderin.
+* Fork'layın, değişiklik yapın ve pull request gönderin.
 * Hataları veya iyileştirme önerilerini Issues sekmesinden bildirin.
 
 ---
 
 ## Lisans
 
-Bu proje için özel bir lisans belirtilmemiştir. Kullanım, kopyalama veya dağıtım için proje sahibinden izin almanız gerekmektedir.
-Yıldızlamanız yeterlidir!
+Bu proje için özel bir lisans belirtilmemiştir. Kullanım, kopyalama veya dağıtım için proje sahibinden izin almanız gerekmemektedir. Yıldızlamanız yeterlidir!
