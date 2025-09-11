@@ -53,7 +53,7 @@ public class DbModelGenerator
                     {
                         csType += "?";
                     }
-                    else if (!Column.IsNullable && csType == "string")
+                    else if (!Column.IsNullable && Column.Type == "string")
                     {
                         sb.AppendLine("        [Required]");
                         if (Column.TypeLength == -1)
