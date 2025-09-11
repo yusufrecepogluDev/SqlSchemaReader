@@ -39,7 +39,7 @@ public class DbModelGenerator
 
                 foreach (var Column in columns)
                 {
-                    string csType = TypeMapper.SqlTypeiToCSharpType(Column.Type, Column.IsNullable);
+                    string csType = TypeMapper.SqlTypeToCSharpType(Column.Type, Column.IsNullable);
                     string propertyName = NameEditor.PascalCase(Column.Name);
                     if (Column.Name.Equals("id", StringComparison.OrdinalIgnoreCase) || Column.Name.Equals($"{dbSetName}Id", StringComparison.OrdinalIgnoreCase))
                     {
@@ -53,7 +53,7 @@ public class DbModelGenerator
                     {
                         csType += "?";
                     }
-                    else if (!Column.IsNullable && Column.Type == "string")
+                    else if (!Column.IsNullable &&  == "string")
                     {
                         sb.AppendLine("        [Required]");
                         if (Column.TypeLength == -1)
@@ -66,7 +66,7 @@ public class DbModelGenerator
                             sb.AppendLine($"        [MaxLength({Column.TypeLength})]");
                         }
                     }
-                    if (Column.Type == "date" || Column.Type == "datetime")
+                    if (csType == "date" || csType == "datetime")
                     {
                         sb.AppendLine($"        public {csType} {propertyName} {{ get; set; }} = DateTime.Now; \n");
 

@@ -2,7 +2,7 @@
 {
     internal class TypeMapper
     {
-        public static string SqlTypeiToCSharpType(string sqlTypei, bool IsNullable)
+        public static string SqlTypeToCSharpType(string sqlTypei, bool IsNullable)
         {
             string csharpType = sqlTypei switch
             {
