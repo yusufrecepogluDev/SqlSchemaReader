@@ -14,19 +14,19 @@ namespace DbModelGenerator.Utils
             _database = database;
         }
 
-        // Tek bağlantı stringi metodu
+        
         private string GetConnectionString()
         {
             return $"Server={_server};Database={_database};Trusted_Connection=True;TrustServerCertificate=True;";
         }
 
-        // Bağlantıyı sağlayan merkezi metot
+        
         private SqlConnection CreateConnection()
         {
             return new SqlConnection(GetConnectionString());
         }
 
-        // tableları getir
+        
         public List<string> GetTables()
         {
             List<string> tableNames = new List<string>();
@@ -50,7 +50,7 @@ namespace DbModelGenerator.Utils
             return tableNames;
         }
 
-        // Sütunları getir
+        
         public List<Column> GetColumns(string table)
         {
             var columns = new List<Column>();
@@ -70,7 +70,7 @@ namespace DbModelGenerator.Utils
                     {
                         Name = reader.GetString(0),
                         Type = reader.GetString(1),
-                        TypeLength = reader.IsDBNull(2) ? -2 : reader.GetInt16(2),
+                        TypeLength = reader.IsDBNull(2) ? -2 : reader.GetInt32(2),
                         IsNullable = reader.GetString(3) == "YES"
                     });
                 }
@@ -83,7 +83,7 @@ namespace DbModelGenerator.Utils
             return columns;
         }
 
-        // Prosedürleri getir
+        
         public List<string> GetProcedures()
         {
             var procedures = new List<string>();

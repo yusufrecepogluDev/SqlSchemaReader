@@ -255,7 +255,7 @@ public class DbModelGenerator
         try
         {
             File.WriteAllText(Path.Combine(path, fileName), content);
-            Console.WriteLine($"{path} created.");
+            Console.WriteLine($"{fileName} created.");
         }
         catch (Exception ex)
         {
