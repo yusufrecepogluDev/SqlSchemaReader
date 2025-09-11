@@ -1,18 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-<PropertyGroup>
-  <TargetFramework>net9.0</TargetFramework>
-  <ImplicitUsings>enable</ImplicitUsings>
-  <IsNullable>enable</IsNullable>
-  <PackageId>DbModelGenerator</PackageId>  
-  <Version>1.0.0</Version>               
-  <Authors>Yusuf</Authors>               
-  <Company>FlayingfFuchs</Company>       
-</PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<PackageId>DbModelGenerator</PackageId>
+		<Version>1.0.1</Version>
+		<Authors>Yusuf</Authors>
+		<Company>FlayingfFuchs</Company>
 
+		<!-- Eklenebilir opsiyonel bilgiler -->
+		<Description>DbModelGenerator: SQL prosedür ve tablo modelleri üreten bir kütüphane</Description>
+		<PackageTags>sql;database;modelgenerator</PackageTags>
+		<RepositoryUrl>https://github.com/yusufrecepogluDev/DbModelGenerator</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/yusufrecepogluDev/DbModelGenerator</PackageProjectUrl>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
+	</ItemGroup>
 
 </Project>

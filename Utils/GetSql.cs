@@ -60,7 +60,7 @@ namespace DbModelGenerator.Utils
                 conn.Open();
 
                 using var cmd = new SqlCommand(
-                    "SELECT COLUMN_NAME, DATA_TYPE ,CHARACTER_MAXIMUM_LENGTH, IS_IsNullable FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @table", conn);
+                    "SELECT COLUMN_NAME, DATA_TYPE ,CHARACTER_MAXIMUM_LENGTH, IS_Nullable FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @table", conn);
                 cmd.Parameters.AddWithValue("@table", table);
 
                 using var reader = cmd.ExecuteReader();
@@ -161,7 +161,7 @@ namespace DbModelGenerator.Utils
                     SELECT 
                         name, 
                         system_type_name, 
-                        is_IsNullable
+                        is_Nullable
                     FROM sys.dm_exec_describe_first_result_set(@sql, NULL, 0);";
 
                 using var cmd = new SqlCommand(sql, conn);
@@ -236,7 +236,7 @@ namespace DbModelGenerator.Utils
                         cr.name AS PK_Column,
                         tp.name AS FK_Table,
                         tr.name AS PK_Table,
-                        cp.is_IsNullable AS PK_IsNullable
+                        cp.is_Nullable AS PK_IsNullable
                     FROM sys.foreign_keys fk
                     INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
                     INNER JOIN sys.tables tp ON fkc.parent_object_id = tp.object_id
