@@ -233,4 +233,5 @@ namespace MyApp.Models
 
 ## Lisans
 
-Bu proje için özel bir lisans belirtilmemiştir. Kullanım, kopyalama veya dağıtım için proje sahibinden izin almanız gerekmemektedir. Yıldızlamanız yeterlidir!
+Bu proje için özel bir lisans belirtilmemiştir. Kullanım, kopyalama veya dağıtım için proje sahibinden izin almanız gerekmektedir.
+Yıldızlamanız yeterlidir!
