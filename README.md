@@ -4,41 +4,22 @@
 
 [🇹🇷 Türkçe versiyona geçmek için tıklayın](#turkce-versiyon)
 
-DbModelGenerator is a small tool that reads tables, columns, stored procedures, and relationships from a SQL Server database and automatically generates C# class models and an Entity Framework Core DbContext. It produces classes ready for use with EF Core.
+`DbModelGenerator` reads tables, columns, stored procedures and relationships from a SQL Server database and generates ready-to-use C# model classes and an Entity Framework Core `DbContext`.
 
----
+## Highlights
 
-## Features
-
-* Generate C# class models from database tables
-* Generate result and parameter models from stored procedures
-* Detect foreign key relationships and integrate them into a generated DbContext
-* Handle nullable columns and map SQL types to C# types
-* Write generated files to a specified folder
-
----
+- Targets: .NET 9
+- Generates model classes, procedure result/parameter models and an EF Core `DbContext`.
+- Simple service class generator available (`ServicesGenarator.cs`) that creates basic CRUD skeletons.
+- Handles primary key detection, nullable columns, string lengths, navigation properties for foreign keys, unique indexes and delete behaviors.
 
 ## Requirements
 
-* .NET 9 or later
-* SQL Server database
-* Entity Framework Core (for DbContext usage)
+- .NET 9 SDK
+- SQL Server database
+- (Optional) Entity Framework Core to use the generated `AppDbContext`
 
----
-
-## Installation
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/DbModelGenerator.git
-```
-
-2. Open and build the project in Visual Studio or via the `dotnet` CLI.
-
----
-
-## Usage
+## Quick usage
 
 ```csharp
 using DbModelGenerator;
@@ -46,75 +27,28 @@ using DbModelGenerator;
 var generator = new DbModelGenerator("SERVER_NAME", "DATABASE_NAME");
 
 // Generate table models
-generator.tableModelGenerator(@"C:\\Models", "MyApp.Models");
+generator.tableModelGenerator(@"C:\Output\Models", "MyApp.Models");
 
-// Generate stored procedure models
-generator.ProsedurModelGenerator(@"C:\\Models", "MyApp.Models");
+// Generate procedure models
+generator.ProsedurModelGenerator(@"C:\Output\Procedures", "MyApp.ProcedureModels");
 
 // Generate DbContext
-generator.DBContextGenerator(@"C:\\Models", "MyApp.Models");
+generator.DBContextGenerator(@"C:\Output\DbContext", "MyApp.Data");
 
-// Or run all generators
-// generator.GenerateAll(@"C:\\Models", "MyApp.Models");
+// Or generate all (multiple overloads exist)
+generator.GenerateAll(@"C:\Output", "MyApp.Models");
 ```
 
-### Parameters
+Notes:
+- Generated files overwrite existing files with the same name.
+- Service classes can be generated using `ServicesGenarator` (produces simple CRUD stubs).
 
-| Parameter    | Description                                     |
-| ------------ | ----------------------------------------------- |
-| `server`     | SQL Server name or endpoint                     |
-| `database`   | Target database name                            |
-| `path`       | Folder path where generated files will be saved |
-| `_namespace` | Namespace for generated C# classes              |
+## Project structure (important files)
 
----
-
-## Structure
-
-* `DbModelGenerator.cs` → Main class and methods (table model, procedure model, DbContext generation)
-* `Utils/GetSql.cs` → Handles SQL Server connection and data retrieval
-* `Models/` → Folder where generated models are stored (output)
-* `TypeMapper.cs` → Converts SQL types to C# types
-* `NameEditor.cs` → Handles naming conventions (PascalCase, abbreviations)
-* `EnglishInflector.cs` → Plural/singular conversion for English
-
----
-
-## Example Output
-
-```csharp
-namespace MyApp.Models
-{
-    public class User
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-
-        public List<Order> Orders { get; set; } = new List<Order>();
-    }
-}
-```
-
----
-
-## Error Handling
-
-* SQL connection errors or missing tables are logged to the console via the internal error logger.
-* Existing files will be overwritten when generating new ones.
-
----
-
-## Contribution
-
-* Fork the repository, make changes, and submit a pull request.
-* Report issues or suggestions via the Issues tab.
-
----
-
-## License
-
-No specific license is assigned for this project. You do not need the author's permission to use, copy, or distribute it. Just give it a star!
-
+- `DbModelGenerator.cs` — main generator logic
+- `ServicesGenarator.cs` — service class generator
+- `Utils/GetSql.cs` — handles schema queries and logging
+- `TypeMapper.cs`, `NameEditor.cs`, `EnglishInflector.cs` — helpers for type/name conversion
 
 ---
 
@@ -124,114 +58,52 @@ No specific license is assigned for this project. You do not need the author's p
 
 # DbModelGenerator
 
-DbModelGenerator, bir SQL Server veritabanındaki tabloları, sütunları, prosedürleri ve ilişkileri okuyarak otomatik olarak C# sınıf modelleri ve bir Entity Framework Core DbContext oluşturmanıza yardımcı olan küçük bir araçtır. EF Core ile kullanıma hazır sınıflar üretir.
+`DbModelGenerator`, bir SQL Server veritabanındaki tabloları, sütunları, prosedürleri ve ilişkileri okuyarak kullanıma hazır C# model sınıfları ve bir Entity Framework Core `DbContext` üretir.
 
----
+## Öne çıkanlar
 
-## Özellikler
-
-* Veritabanı tablolarından C# sınıf modelleri oluşturma
-* Prosedürlerin sonuç ve parametre modellerini oluşturma
-* Foreign key ilişkilerini tespit edip oluşturulan DbContext'e ekleme
-* Nullable sütunları doğru şekilde ele alma ve SQL tiplerini C#'a çevirme
-* Oluşturulan dosyaları belirtilen klasöre yazma
-
----
+- Hedef: .NET 9
+- Model sınıfları, prosedür sonuç/parametre modelleri ve EF Core `DbContext` oluşturma
+- `ServicesGenarator.cs` ile basit CRUD servis iskeleti üretme
+- Birincil anahtar tespiti, nullable sütun işleme, string uzunlukları, foreign key navigasyon property'leri, unique index ve silme davranışlarını yönetme
 
 ## Gereksinimler
 
-* .NET 9 veya üzeri
-* SQL Server veritabanı
-* Entity Framework Core (DbContext kullanımı için)
+- .NET 9 SDK
+- SQL Server veritabanı
+- (İsteğe bağlı) Oluşturulan `AppDbContext` için Entity Framework Core
 
----
-
-## Kurulum
-
-1. Depoyu klonlayın:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/DbModelGenerator.git
-```
-
-2. Projeyi Visual Studio veya `dotnet` CLI ile açıp derleyin.
-
----
-
-## Kullanım
+## Hızlı kullanım
 
 ```csharp
 using DbModelGenerator;
 
 var generator = new DbModelGenerator("SERVER_NAME", "DATABASE_NAME");
 
-// Model sınıfları oluştur
-generator.tableModelGenerator(@"C:\\Models", "MyApp.Models");
+// Tablo modelleri oluştur
+generator.tableModelGenerator(@"C:\Output\Models", "MyApp.Models");
 
 // Prosedür modelleri oluştur
-generator.ProsedurModelGenerator(@"C:\\Models", "MyApp.Models");
+generator.ProsedurModelGenerator(@"C:\Output\Procedures", "MyApp.ProcedureModels");
 
 // DbContext oluştur
-generator.DBContextGenerator(@"C:\\Models", "MyApp.Models");
+generator.DBContextGenerator(@"C:\Output\DbContext", "MyApp.Data");
 
-// Veya hepsini birden oluştur
-// generator.GenerateAll(@"C:\\Models", "MyApp.Models");
+// Tümünü oluştur (birden fazla overload mevcut)
+generator.GenerateAll(@"C:\Output", "MyApp.Models");
 ```
 
-### Parametreler
+Notlar:
+- Oluşturulan dosyalar aynı isimdeki mevcut dosyaların üzerine yazılır.
+- Servis sınıfları `ServicesGenarator` ile basit iskelet olarak üretilebilir.
 
-| Parametre    | Açıklama                                           |
-| ------------ | -------------------------------------------------- |
-| `server`     | SQL Server adı veya bağlantı noktası               |
-| `database`   | Hedef veritabanı adı                               |
-| `path`       | Oluşturulacak dosyaların kaydedileceği klasör yolu |
-| `_namespace` | Oluşturulacak C# sınıfları için namespace          |
+## Önemli dosyalar
 
----
-
-## Yapı
-
-* `DbModelGenerator.cs` → Ana sınıf ve metotlar (Tablo model, Prosedür model, DbContext oluşturma)
-* `Utils/GetSql.cs` → SQL Server ile bağlantı ve veri çekme işlemleri
-* `Models/` → Üretilen modellerin saklanacağı klasör (çıktı)
-* `TypeMapper.cs` → SQL tiplerini C# tiplerine dönüştürür
-* `NameEditor.cs` → İsimlendirme düzenlemeleri (PascalCase, kısaltma oluşturma)
-* `EnglishInflector.cs` → İngilizce çoğul/tekil çevirici
+- `DbModelGenerator.cs` — ana jeneratör
+- `ServicesGenarator.cs` — servis sınıfı jeneratörü
+- `Utils/GetSql.cs` — şema sorguları ve loglama
+- `TypeMapper.cs`, `NameEditor.cs`, `EnglishInflector.cs` — yardımcılar
 
 ---
 
-## Örnek Çıktı
-
-```csharp
-namespace MyApp.Models
-{
-    public class User
-    {
-        public int Id { get; set; }
-        public string Name { get; set; }
-
-        public List<Order> Orders { get; set; } = new List<Order>();
-    }
-}
-```
-
----
-
-## Hata Yönetimi
-
-* SQL bağlantı hataları veya eksik tablolar konsola veya log'a yazılır.
-* Oluşturulacak dosyalar mevcutsa üzerine yazılır.
-
----
-
-## Katkıda Bulunma
-
-* Fork'layın, değişiklik yapın ve pull request gönderin.
-* Hataları veya iyileştirme önerilerini Issues sekmesinden bildirin.
-
----
-
-## Lisans
-
-Bu proje için özel bir lisans belirtilmemiştir. Kullanım, kopyalama veya dağıtım için proje sahibinden izin almanız gerekmektedir.
-Yıldızlamanız yeterlidir!
+Repository: https://github.com/yusufrecepogluDev/SqlSchemaReader

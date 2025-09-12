@@ -1,4 +1,6 @@
-﻿namespace DbModelGenerator.Utils
+﻿using System;
+
+namespace DbModelGenerator.Utils
 {
     internal class NameEditor
     {
@@ -7,16 +9,19 @@
             if (string.IsNullOrWhiteSpace(input))
                 return string.Empty;
 
+            input = input
+                .Replace('ç', 'c').Replace('Ç', 'C')
+                .Replace('ğ', 'g').Replace('Ğ', 'G')
+                .Replace('ı', 'i').Replace('İ', 'I')
+                .Replace('ö', 'o').Replace('Ö', 'O')
+                .Replace('ş', 's').Replace('Ş', 'S')
+                .Replace('ü', 'u').Replace('Ü', 'U');
+
             string[] parts = input.Split(new[] { '_', ' ', '-', '.' }, StringSplitOptions.RemoveEmptyEntries);
-            string convert = input
-            .Replace('ç', 'c').Replace('Ç', 'C')
-            .Replace('ğ', 'g').Replace('Ğ', 'G')
-            .Replace('ı', 'i').Replace('İ', 'I')
-            .Replace('ö', 'o').Replace('Ö', 'O')
-            .Replace('ş', 's').Replace('Ş', 'S')
-            .Replace('ü', 'u').Replace('Ü', 'U');
-            return string.Concat(parts.Select(p => char.ToUpper(p[0]) + p.Substring(1)));
+
+            return string.Concat(parts.Select(p => char.ToUpper(p[0]) + p.Substring(1).ToLower()));
         }
+
 
         public static string GetAbbreviation(string input)
         {
@@ -27,8 +32,15 @@
                 .Select(c => char.ToLower(c))
                 .ToArray();
 
-            return new string(parts);
+            return new string(parts)
+                .Replace('ç', 'c')
+                .Replace('ğ', 'g')
+                .Replace('ı', 'i')
+                .Replace('ö', 'o')
+                .Replace('ş', 's')
+                .Replace('ü', 'u');
         }
+
 
     }
 }

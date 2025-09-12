@@ -2,9 +2,10 @@
 {
     internal class TypeMapper
     {
-        public static string SqlTypeToCSharpType(string sqlTypei, bool IsNullable)
+        public static string SqlTypeToCSharpType(string sqlType, bool IsNullable)
         {
-            string csharpType = sqlTypei switch
+            sqlType = sqlType.ToLower();
+            string csharpType = sqlType switch
             {
                 "int" => "int",
                 "bigint" => "long",
@@ -24,6 +25,7 @@
                 "sql_variant" => "object",
                 _ => "string"
             };
+
 
             if (csharpType != "string" && csharpType != "byte[]" && csharpType != "object" && IsNullable)
             {

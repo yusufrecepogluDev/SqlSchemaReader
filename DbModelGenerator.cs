@@ -1,10 +1,10 @@
 ﻿using DbModelGenerator.Models;
 using DbModelGenerator.Utils;
-using Microsoft.Data.SqlClient;
-using Microsoft.Identity.Client;
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace DbModelGenerator;
+
 public class DbModelGenerator
 {
     private GetSql _getSql;
@@ -23,13 +23,12 @@ public class DbModelGenerator
                 List<Column> columns = _getSql.GetColumns(table);
                 var sb = new StringBuilder();
                 var className = NameEditor.PascalCase(table);
-                var dbSetName = className.Length > 1 ? className[..^1] : className;
+                var typeName = EnglishInflector.ToSingular(className);
 
-                string typeName = EnglishInflector.ToSingular(NameEditor.PascalCase(table));
-                sb.AppendLine($"using Microsoft.EntityFrameworkCore;");
-                sb.AppendLine($"using System.ComponentModel.DataAnnotations;");
-                sb.AppendLine($"using System.ComponentModel.DataAnnotations.Schema;");
-                sb.AppendLine();
+                sb.AppendLine("using System;");
+                sb.AppendLine("using System.Collections.Generic;");
+                sb.AppendLine("using System.ComponentModel.DataAnnotations;");
+                sb.AppendLine("using System.ComponentModel.DataAnnotations.Schema;");
                 sb.AppendLine();
                 sb.AppendLine($"namespace {_namespace}");
                 sb.AppendLine("{");
@@ -37,50 +36,53 @@ public class DbModelGenerator
                 sb.AppendLine($"    public class {typeName}");
                 sb.AppendLine("    {");
 
-                foreach (var Column in columns)
+                foreach (var column in columns)
                 {
-                    string csType = TypeMapper.SqlTypeToCSharpType(Column.Type, Column.IsNullable);
-                    string propertyName = NameEditor.PascalCase(Column.Name);
-                    if (Column.Name.Equals("id", StringComparison.OrdinalIgnoreCase) || Column.Name.Equals($"{dbSetName}Id", StringComparison.OrdinalIgnoreCase))
+                    string csType = TypeMapper.SqlTypeToCSharpType(column.Type, column.IsNullable);
+                    string propertyName = NameEditor.PascalCase(column.Name);
+
+                    // Primary Key
+                    if (column.Name.Equals("id", StringComparison.OrdinalIgnoreCase) ||
+                        column.Name.Equals($"{typeName}Id", StringComparison.OrdinalIgnoreCase))
                     {
                         sb.AppendLine("        [Key]");
                     }
-                    else if (Column.Name.EndsWith("Id", StringComparison.OrdinalIgnoreCase))
+
+                    // Required & MaxLength for strings
+                    if (!column.IsNullable && csType == "string")
                     {
-                        sb.AppendLine($"        [ForeignKey(\"{Column.Name[..^2]}\")]");
+                        sb.AppendLine("        [Required]");
                     }
-                    if (Column.IsNullable && !csType.EndsWith("?"))
+                    if (csType == "string" && column.TypeLength > 0)
+                    {
+                        int length = column.TypeLength == -1 ? 4000 : column.TypeLength;
+                        sb.AppendLine($"        [MaxLength({length})]");
+                    }
+
+                    // Nullable type
+                    if (column.IsNullable && !csType.EndsWith("?") && csType != "string")
                     {
                         csType += "?";
                     }
-                    else if (!Column.IsNullable &&  == "string")
-                    {
-                        sb.AppendLine("        [Required]");
-                        if (Column.TypeLength == -1)
-                        {
-                            Column.TypeLength = 4000;
-                            sb.AppendLine($"        [MaxLength({Column.TypeLength})]");
-                        }
-                        else if (Column.TypeLength > 0)
-                        {
-                            sb.AppendLine($"        [MaxLength({Column.TypeLength})]");
-                        }
-                    }
-                    if (csType == "date" || csType == "datetime")
-                    {
-                        sb.AppendLine($"        public {csType} {propertyName} {{ get; set; }} = DateTime.Now; \n");
 
+                    // Default value for DateTime
+                    if ((csType == "DateTime" || csType == "DateTime?") && !column.IsNullable)
+                    {
+                        sb.AppendLine($"        public {csType} {propertyName} {{ get; set; }} = DateTime.Now;");
                     }
                     else
                     {
-                        sb.AppendLine($"        public {csType} {propertyName} {{ get; set; }}\n");
+                        sb.AppendLine($"        public {csType} {propertyName} {{ get; set; }}");
                     }
+
+                    sb.AppendLine();
                 }
+
+                // Navigation properties
                 foreach (var fk in _getSql.GetForeignKeys().Where(fk => fk.FKTable == table || fk.PKTable == table))
                 {
                     bool isCollection = fk.PKTable == table;
                     string relatedType = EnglishInflector.ToSingular(NameEditor.PascalCase(fk.PKTable == table ? fk.FKTable : fk.PKTable));
-                    string fkColumnName = NameEditor.PascalCase(fk.FKColumn).Replace("Id", "");
 
                     if (isCollection)
                     {
@@ -89,8 +91,10 @@ public class DbModelGenerator
                     }
                     else
                     {
-                        string IsNullableMark = fk.IsNullable ? "?" : "";
-                        sb.AppendLine($"        public {relatedType}{IsNullableMark} {fkColumnName} {{ get; set; }}");
+                        string fkPropName = NameEditor.PascalCase(fk.FKColumn);
+                        if (fkPropName.EndsWith("Id")) fkPropName = fkPropName[..^2];
+                        string nullableMark = fk.IsNullable ? "?" : "";
+                        sb.AppendLine($"        public {relatedType}{nullableMark} {fkPropName} {{ get; set; }}");
                     }
                 }
 
@@ -102,8 +106,7 @@ public class DbModelGenerator
         }
         catch (Exception ex)
         {
-            string message = $"Table Model Creation Error: {ex.Message}";
-            _getSql.ErrorLog(message);
+            _getSql.ErrorLog($"Table Model Creation Error: {ex.Message}");
         }
     }
 
@@ -114,65 +117,56 @@ public class DbModelGenerator
             foreach (var prosedur in _getSql.GetProcedures())
             {
                 var resultColumns = _getSql.GetProcedureColumns(prosedur);
-                var ClassName = NameEditor.PascalCase(prosedur);
-                if (resultColumns.Any())
+                if (!resultColumns.Any()) continue;
+
+                var sb = new StringBuilder();
+                var className = NameEditor.PascalCase(prosedur);
+
+                sb.AppendLine($"namespace {_namespace}");
+                sb.AppendLine("{");
+                sb.AppendLine($"    public class {className}");
+                sb.AppendLine("    {");
+
+                foreach (var col in resultColumns)
                 {
-                    try
-                    {
-                        var sb = new StringBuilder();
-                        sb.AppendLine($"namespace {_namespace}");
-                        sb.AppendLine("{");
-                        sb.AppendLine($"    public class {ClassName}");
-                        sb.AppendLine("    {");
+                    string csType = TypeMapper.SqlTypeToCSharpType(col.Type, col.IsNullable);
+                    string propertyName = NameEditor.PascalCase(col.Name);
+                    if (col.IsNullable && !csType.EndsWith("?") && csType != "string")
+                        csType += "?";
 
-                        foreach (var col in resultColumns)
-                        {
-                            string csType = TypeMapper.SqlTypeToCSharpType(col.Type, col.IsNullable);
-                            string propertyName = NameEditor.PascalCase(col.Name);
-                            if (col.IsNullable && !csType.EndsWith("?"))
-                            {
-                                csType += "?";
-                            }
-                            sb.AppendLine($"        public {csType} {propertyName} {{ get; set; }}\n");
-                        }
-                        sb.AppendLine("    }");
-                        var parameters = _getSql.GetProcedureParameters(prosedur);
-                        if (parameters.Any())
-                        {
-                            var paramClassName = NameEditor.PascalCase(prosedur) + "Params";
-
-                            sb.AppendLine($"    public class {paramClassName}");
-                            sb.AppendLine("    {");
-
-                            foreach (var param in parameters)
-                            {
-                                string csType = TypeMapper.SqlTypeToCSharpType(param.Type, param.IsNullable);
-                                string propertyName = NameEditor.PascalCase(param.Name.TrimStart('@'));
-                                if (param.IsNullable && !csType.EndsWith("?"))
-                                {
-                                    csType += "?";
-                                }
-                                sb.AppendLine($"        public {csType} {propertyName} {{ get; set; }}\n");
-                            }
-                            sb.AppendLine("    }");
-                            sb.AppendLine("}");
-                        }
-                        
-
-                        SaveFile(path, sb.ToString(), $"{ClassName}.cs");
-                    }
-                    catch (Exception ex)
-                    {
-                        string message = $"Procedure Model Error ({prosedur}): {ex.Message}";
-                        _getSql.ErrorLog(message);
-                    }
+                    sb.AppendLine($"        public {csType} {propertyName} {{ get; set; }}");
                 }
+
+                sb.AppendLine("    }");
+
+                // Procedure parameters class
+                var parameters = _getSql.GetProcedureParameters(prosedur);
+                if (parameters.Any())
+                {
+                    var paramClassName = $"{className}Params";
+                    sb.AppendLine($"    public class {paramClassName}");
+                    sb.AppendLine("    {");
+
+                    foreach (var param in parameters)
+                    {
+                        string csType = TypeMapper.SqlTypeToCSharpType(param.Type, param.IsNullable);
+                        string propertyName = NameEditor.PascalCase(param.Name.TrimStart('@'));
+                        if (param.IsNullable && !csType.EndsWith("?") && csType != "string") csType += "?";
+
+                        sb.AppendLine($"        public {csType} {propertyName} {{ get; set; }}");
+                    }
+
+                    sb.AppendLine("    }");
+                }
+
+                sb.AppendLine("}");
+
+                SaveFile(path, sb.ToString(), $"{className}.cs");
             }
         }
         catch (Exception ex)
         {
-            string message = $"Procedure Model Creation Error: {ex.Message}";
-            _getSql.ErrorLog(message);
+            _getSql.ErrorLog($"Procedure Model Creation Error: {ex.Message}");
         }
     }
 
@@ -186,60 +180,62 @@ public class DbModelGenerator
             sb.AppendLine($"namespace {_namespace}");
             sb.AppendLine("{");
             sb.AppendLine("    public class AppDbContext : DbContext");
-            sb.AppendLine("     {");
-            sb.AppendLine("        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }\n");
+            sb.AppendLine("    {");
+            sb.AppendLine("        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }");
+            sb.AppendLine();
 
+            // DbSets
             foreach (var table in _getSql.GetTables())
             {
                 string typeName = EnglishInflector.ToSingular(NameEditor.PascalCase(table));
                 string propName = EnglishInflector.ToPlural(typeName);
-                sb.AppendLine($"        public DbSet<{typeName}> {propName} {{ get; set; }}\n");
+                sb.AppendLine($"        public DbSet<{typeName}> {propName} {{ get; set; }}");
             }
-            sb.AppendLine("    ");
+
+            sb.AppendLine();
             sb.AppendLine("        protected override void OnModelCreating(ModelBuilder modelBuilder)");
             sb.AppendLine("        {");
 
+            // Unique columns
             foreach (var table in _getSql.GetTables())
             {
-                sb.AppendLine($"            modelBuilder.Entity<{EnglishInflector.ToSingular(NameEditor.PascalCase(table))}>().ToTable(\"{table}\");\n");
-
                 foreach (var unique in _getSql.GetUniqueColmun(table))
                 {
                     string entityName = EnglishInflector.ToSingular(NameEditor.PascalCase(unique.TableName));
                     string colName = NameEditor.PascalCase(unique.ColmunName);
-
-                    sb.AppendLine($"            modelBuilder.Entity<{entityName}>()");
-                    sb.AppendLine($"                .HasIndex(e => e.{colName})");
-                    sb.AppendLine($"                .IsUnique();");
-                    sb.AppendLine();
+                    sb.AppendLine($"            modelBuilder.Entity<{entityName}>().HasIndex(e => e.{colName}).IsUnique();");
                 }
             }
 
+            // Foreign keys
             foreach (var fk in _getSql.GetForeignKeys())
             {
                 string fkEntity = EnglishInflector.ToSingular(NameEditor.PascalCase(fk.FKTable));
                 string pkEntity = EnglishInflector.ToSingular(NameEditor.PascalCase(fk.PKTable));
-                string fkPropAbbr = NameEditor.GetAbbreviation(NameEditor.PascalCase(fk.FKTable));
-                string pkPropAbbr = NameEditor.GetAbbreviation(NameEditor.PascalCase(fk.PKTable));
+
+                string fkPropName = NameEditor.PascalCase(fk.FKColumn);
+                if (fkPropName.EndsWith("Id")) fkPropName = fkPropName[..^2];
+
+                string navCollection = EnglishInflector.ToPlural(fkEntity);
                 string deleteBehavior = fk.IsNullable ? "DeleteBehavior.SetNull" : "DeleteBehavior.Cascade";
 
-                sb.AppendLine($"                modelBuilder.Entity<{fkEntity}>()");
-                sb.AppendLine($"                    .HasOne({fkPropAbbr} => {fkPropAbbr}.{pkEntity})");
-                sb.AppendLine($"                    .WithMany({pkPropAbbr} => {pkPropAbbr}.{fk.FKTable})");
-                sb.AppendLine($"                    .HasForeignKey({fkPropAbbr} => {fkPropAbbr}.{NameEditor.PascalCase(fk.FKColumn)})");
-                sb.AppendLine($"                    .OnDelete({deleteBehavior})");
-                sb.AppendLine($"                    .HasConstraintName(\"FK_{fk.FKTable}_{fk.PKTable}\");");
+                sb.AppendLine($"            modelBuilder.Entity<{fkEntity}>()");
+                sb.AppendLine($"                .HasOne(e => e.{pkEntity})");
+                sb.AppendLine($"                .WithMany(e => e.{navCollection})");
+                sb.AppendLine($"                .HasForeignKey(e => e.{NameEditor.PascalCase(fk.FKColumn)})");
+                sb.AppendLine($"                .OnDelete({deleteBehavior})");
+                sb.AppendLine($"                .HasConstraintName(\"FK_{fk.FKTable}_{fk.PKTable}\");");
             }
-            sb.AppendLine("         }");
-            sb.AppendLine("     }");
+
+            sb.AppendLine("        }");
+            sb.AppendLine("    }");
             sb.AppendLine("}");
 
             SaveFile(path, sb.ToString(), "AppDbContext.cs");
         }
         catch (Exception ex)
         {
-            string message = $"DbContext Creation Error: {ex.Message}";
-            _getSql.ErrorLog(message);
+            _getSql.ErrorLog($"DbContext Creation Error: {ex.Message}");
         }
     }
 
@@ -249,8 +245,20 @@ public class DbModelGenerator
         ProsedurModelGenerator(path, _namespace);
         DBContextGenerator(path, _namespace);
     }
+    public void GenerateAll(string tablePath, string prosedurPath, string dbContextPath, string _namespace)
+    {
+        tableModelGenerator(tablePath, _namespace);
+        ProsedurModelGenerator(prosedurPath, _namespace);
+        DBContextGenerator(dbContextPath, _namespace);
+    }
+    public void GenerateAll(string tablePath, string prosedurPath, string dbContextPath, string table_namespace, string prosedur_namespace, string dbContext_namespace)
+    {
+        tableModelGenerator(tablePath, table_namespace);
+        ProsedurModelGenerator(prosedurPath, prosedur_namespace);
+        DBContextGenerator(dbContextPath, dbContext_namespace);
+    }
 
-    private void SaveFile(string path, string content, string fileName = "AppDbContext.cs")
+    private void SaveFile(string path, string content, string fileName)
     {
         try
         {
@@ -259,8 +267,7 @@ public class DbModelGenerator
         }
         catch (Exception ex)
         {
-            string message = $"File Save Error ({fileName}): {ex.Message}";
-            _getSql.ErrorLog(message);
+            _getSql.ErrorLog($"File Save Error ({fileName}): {ex.Message}");
         }
     }
 }
